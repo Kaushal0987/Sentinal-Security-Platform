@@ -1,13 +1,32 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Shield, ArrowUpRight } from "lucide-react";
 import { appNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { token, loading, signOut, user } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !token) {
+      router.replace("/auth/login");
+    }
+  }, [loading, router, token]);
+
+  if (loading || !token) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-300">
+        Loading secure workspace...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -22,6 +41,11 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
               <span className="block text-xs font-normal text-slate-400">Security control center</span>
             </span>
           </Link>
+
+          <div className="hidden text-right lg:block">
+            <p className="text-sm text-slate-400">Signed in as</p>
+            <p className="text-sm font-medium text-white">{user?.email ?? "Secure session"}</p>
+          </div>
 
           <nav className="hidden items-center gap-2 lg:flex">
             {appNavigation.map((item) => {
@@ -44,9 +68,9 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             })}
           </nav>
 
-          <Link className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10" href="/auth/login">
+          <button className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10" onClick={() => void signOut()} type="button">
             Sign out <ArrowUpRight className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
       </header>
 
